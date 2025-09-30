@@ -1,0 +1,31 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff; /* white background */
+  padding: 10px 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* subtle shadow */
+  border-radius: 8px;
+}
+
+.nav-logo {
+  height: 40px;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.nav-logo:hover {
+  transform: scale(1.05);
+}
+
+.nav-profile {
+  height: 45px;
+  width: 45px;
+  border-radius: 50%; /* make profile round */
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.nav-profile:hover {
+  transform: scale(1.1);
+}

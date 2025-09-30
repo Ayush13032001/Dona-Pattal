@@ -1,0 +1,124 @@
+.list-product {
+  width: 90%;
+  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.list-product h1 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #222;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+/* Header row */
+.list-format-main {
+  display: grid;
+  grid-template-columns: 100px 2fr 120px 120px 120px 60px;
+  align-items: center;
+  padding: 12px 15px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.listproduct-allproduct {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.listproduct-format-main {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  display: grid;
+  grid-template-columns: 100px 2fr 120px 120px 120px 60px;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+}
+
+.listproduct-format-main:hover {
+  transform: scale(1.02);
+}
+
+/* Product image */
+.listproduct-product-icon {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin: auto;
+}
+
+/* Remove button */
+.listproduct-remove-icon {
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  justify-self: center; /* centers ❌ in its column */
+}
+
+.listproduct-remove-icon:hover {
+  transform: scale(1.2);
+  filter: brightness(0.7);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 10px 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .list-format-main,
+  .listproduct-format-main {
+    grid-template-columns: 80px 1fr 80px 80px 80px 50px;
+    font-size: 14px;
+    gap: 10px;
+  }
+
+  .listproduct-product-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .listproduct-remove-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 500px) {
+  .list-format-main {
+    display: none; /* hide header on very small screens */
+  }
+
+  .listproduct-format-main {
+    grid-template-columns: 80px 1fr 50px;
+    grid-template-rows: auto auto;
+    padding: 12px;
+    text-align: left;
+  }
+
+  .listproduct-format-main p:nth-child(2),
+  .listproduct-format-main p:nth-child(3),
+  .listproduct-format-main p:nth-child(4),
+  .listproduct-format-main p:nth-child(5) {
+    grid-column: 2 / span 2;
+  }
+
+  .listproduct-remove-icon {
+    justify-self: end;
+    grid-row: 1;
+  }
+}

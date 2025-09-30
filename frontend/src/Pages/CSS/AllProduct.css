@@ -1,0 +1,76 @@
+.all-products {
+  padding: 30px;
+}
+
+.all-products h1 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.all-products hr {
+  width: 150px;
+  margin: 10px auto 30px;
+  border: 1px solid #222;
+}
+
+/* Grid layout - responsive */
+.all-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 30px;
+}
+
+/* Product card */
+.product-card {
+  text-align: center;
+  transition: transform 0.3s ease;
+  overflow: hidden;          /* prevents image overflow on hover */
+  border-radius: 12px;       /* optional: rounded card corners */
+  background-color: #fff;    /* optional: card background */
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);  /* subtle shadow */
+}
+
+.product-card:hover {
+  transform: scale(1.05);
+}
+
+/* Product image */
+.product-img {
+  width: 100%;
+  height: 220px;        /* fixed height for uniformity */
+  object-fit: cover;    /* crop/scale without distortion */
+  border-radius: 12px;
+  display: block;
+}
+
+/* Product name */
+.product-name {
+  margin: 10px 0;
+  font-size: 16px;
+  text-transform: capitalize;
+  color: #111827;
+  font-weight: 500;
+}
+
+/* Price container */
+.product-prices {
+  display: flex;
+  flex-direction: column;  /* stack new and old price */
+  align-items: center;
+  gap: 4px;
+}
+
+/* New price */
+.new-price {
+  font-weight: bold;
+  font-size: 18px;
+  color: #111827;
+}
+
+/* Old price */
+.old-price {
+  color: gray;
+  text-decoration: line-through;
+  font-size: 16px;
+}
