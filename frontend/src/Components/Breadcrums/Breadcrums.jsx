@@ -1,16 +1,25 @@
-import React from 'react'
-import './Breadcrums.css'
-import arrow_icon from '../Assets/breadcrum_arrow.png';
+import React from "react";
+import { Breadcrumbs, Link, Typography } from "@mui/material";
 
-const Breadcrums = (props) => {
-    const {product} = props;
+const Breadcrums = ({ product }) => {
   return (
-    <div className='breadcrum'>
-        HOME <img src= {arrow_icon} alt="" /> SHOP <img src= {arrow_icon} alt="" /> {product.category} <img src= {arrow_icon} alt="" /> {product.name}
+    <Breadcrumbs aria-label="breadcrumb">
+      <Link underline="hover" color="inherit" href="/">
+        HOME
+      </Link>
+      <Link underline="hover" color="inherit" href="/shop">
+        SHOP
+      </Link>
+      <Link
+        underline="hover"
+        color="inherit"
+        href={`/category/${product.category}`}
+      >
+        {product.category}
+      </Link>
+      <Typography color="text.primary">{product.name}</Typography>
+    </Breadcrumbs>
+  );
+};
 
-      
-    </div>
-  )
-}
-
-export default Breadcrums
+export default Breadcrums;

@@ -86,3 +86,21 @@ exports.getAllProducts = async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch products" });
   }
 };
+// ✅ Get Popular Products (example: category = "plate")
+exports.getPopularInPlate = async (req, res) => {
+  try {
+    const products = await Product.find({ category: "plate" }).limit(8);
+    res.json(products);
+  } catch (error) {
+    console.error("❌ Error fetching popular products:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch popular products" });
+  }
+};
+
+exports.getRecentProducts = async (req, res) => {
+  const products = await Product.find({}).sort({ createdAt: -1 }).limit(8);
+
+  res.json(products);
+};

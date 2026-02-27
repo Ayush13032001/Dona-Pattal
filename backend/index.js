@@ -1,4 +1,3 @@
-// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -6,268 +5,228 @@ const fs = require("fs");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const Razorpay = require("razorpay");
 const crypto = require("crypto");
-const paymentRoutes = require("./routes/paymentRoutes");
+const Razorpay = require("razorpay");
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 
-
-// ----------------------
-// RAZORPAY INSTANCE
-// ----------------------
-const instance = new Razorpay({
-  key_id: process.env.RAZORPAY_API_KEY,
-  key_secret: process.env.RAZORPAY_API_SECRET,
-});
-
-// ----------------------
-// ROUTES & MODELS
-// ----------------------
+// Routes
+const paymentRoutes = require("./routes/paymentRoutes");
 const productRoutes = require("./routes/productRoutes");
-const Product = require("./models/Product");
 
-const Users = mongoose.model("Users", {
-  name: { type: String },
-  email: { type: String, unique: true },
-  password: { type: String },
-  cartData: { type: Object },
-  date: { type: Date, default: Date.now },
-});
-
-// ----------------------
-// APP INIT
-// ----------------------
 const app = express();
-const port = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4000;
 
-// ----------------------
-// MIDDLEWARE
-// ----------------------
+/* ------------------ MIDDLEWARE ------------------ */
 app.use(express.json());
 app.use(cors());
 
-// Ensure upload folder exists
+/* ------------------ UPLOAD DIR ------------------ */
 const uploadDir = path.join(__dirname, "upload/images");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-// Serve images statically
 app.use("/images", express.static(uploadDir));
 
-// ----------------------
-// FETCH USER MIDDLEWARE
-// ----------------------
+/* ------------------ DB ------------------ */
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch((err) => console.error("❌ MongoDB Error:", err));
+
+/* ------------------ USER MODEL ------------------ */
+const Users = mongoose.model("Users", {
+  name: String,
+  email: { type: String, unique: true },
+  password: String,
+  cartData: Object,
+  otp: String,
+  otpExpires: Date,
+  date: { type: Date, default: Date.now },
+});
+
+/* ------------------ AUTH MIDDLEWARE ------------------ */
 const fetchUser = (req, res, next) => {
   const token = req.header("auth-token");
-  if (!token) {
-    return res.status(401).json({ error: "Access denied. No token provided." });
-  }
+  if (!token) return res.status(401).json({ error: "No token" });
 
   try {
     const data = jwt.verify(token, process.env.JWT_SECRET);
     req.user = data.user;
     next();
-  } catch (err) {
-    console.error("JWT verification failed:", err.message);
-    res.status(401).json({ error: "Invalid or expired token." });
+  } catch {
+    res.status(401).json({ error: "Invalid token" });
   }
 };
 
-// ----------------------
-// MONGODB CONNECTION
-// ----------------------
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+/* ------------------ EMAIL SETUP ------------------ */
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
-// ----------------------
-// SIGNUP
-// ----------------------
+/* ------------------ AUTH ROUTES ------------------ */
+// Signup
 app.post("/signup", async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
+  const { username, email, password } = req.body;
 
-    const existingUser = await Users.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        error: "Existing user found with the same email address",
-      });
-    }
+  const exists = await Users.findOne({ email });
+  if (exists)
+    return res.json({ success: false, error: "Email already exists" });
 
-    const cart = {};
-    for (let i = 0; i < 300; i++) cart[i] = 0;
+  const hashed = await bcrypt.hash(password, 10);
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(String(password), salt);
+  const cart = {};
+  for (let i = 0; i < 300; i++) cart[i] = 0;
 
-    const user = new Users({
-      name: username,
-      email,
-      password: hashedPassword,
-      cartData: cart,
-    });
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 min
 
-    await user.save();
+  const user = new Users({
+    name: username,
+    email,
+    password: hashed,
+    cartData: cart,
+    otp,
+    otpExpires,
+  });
 
-    const data = { user: { id: user.id } };
-    const token = jwt.sign(data, process.env.JWT_SECRET, { expiresIn: "7d" });
+  await user.save();
 
-    res.json({ success: true, token });
-  } catch (err) {
-    console.error("❌ Signup error:", err);
-    res.status(500).json({ success: false, error: "Server error" });
-  }
+  // Send OTP
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Your OTP for Signup",
+    html: `<h3>Your OTP is <b>${otp}</b>. Expires in 5 minutes.</h3>`,
+  });
+
+  res.json({ success: true, message: "Signup successful. OTP sent." });
 });
 
-// ----------------------
-// LOGIN
-// ----------------------
+// Login
 app.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
+  const user = await Users.findOne({ email });
+  if (!user) return res.json({ success: false, error: "User not found" });
 
-    const user = await Users.findOne({ email });
-    if (!user) {
-      return res.json({ success: false, error: "Wrong Email Id" });
-    }
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) return res.json({ success: false, error: "Invalid password" });
 
-    const passCompare = await bcrypt.compare(password, user.password);
-    if (!passCompare) {
-      return res.json({ success: false, error: "Wrong Password" });
-    }
+  // Generate OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  user.otp = otp;
+  user.otpExpires = new Date(Date.now() + 5 * 60 * 1000);
+  await user.save();
 
-    const data = { user: { id: user.id } };
-    const token = jwt.sign(data, process.env.JWT_SECRET, { expiresIn: "7d" });
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Your OTP for Login",
+    html: `<h3>Your OTP is <b>${otp}</b>. Expires in 5 minutes.</h3>`,
+  });
 
-    res.json({ success: true, token });
-  } catch (err) {
-    console.error("❌ Login error:", err);
-    res.status(500).json({ success: false, error: "Server error" });
-  }
+  res.json({ success: true, message: "OTP sent for login" });
 });
 
-// ----------------------
-// NEW COLLECTION
-// ----------------------
-app.get("/newcollection", async (req, res) => {
-  let products = await Product.find({});
-  let newcollection = products.slice(-8); // last 8 products
-  res.send(newcollection);
+// Verify OTP
+app.post("/verify-otp", async (req, res) => {
+  const { email, otp } = req.body;
+  const user = await Users.findOne({ email });
+  if (!user) return res.json({ success: false, error: "User not found" });
+
+  if (user.otp !== otp || user.otpExpires < new Date())
+    return res.json({ success: false, error: "Invalid or expired OTP" });
+
+  user.otp = null;
+  user.otpExpires = null;
+  await user.save();
+
+  const token = jwt.sign({ user: { id: user._id } }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+  res.json({ success: true, token });
 });
 
-// ----------------------
-// POPULAR IN WOMEN
-// ----------------------
-app.get("/popularinplate", async (req, res) => {
-  let products = await Product.find({ category: "plate" });
-  let popular_in_women = products.slice(0, 4);
-  res.send(popular_in_women);
+// Resend OTP
+app.post("/resend-otp", async (req, res) => {
+  const { email } = req.body;
+  const user = await Users.findOne({ email });
+  if (!user) return res.json({ success: false, error: "User not found" });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  user.otp = otp;
+  user.otpExpires = new Date(Date.now() + 5 * 60 * 1000);
+  await user.save();
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Resent OTP",
+    html: `<h3>Your OTP is <b>${otp}</b>. Expires in 5 minutes.</h3>`,
+  });
+
+  res.json({ success: true, message: "OTP resent successfully" });
 });
 
-// ----------------------
-// CART ENDPOINTS
-// ----------------------
+/* ------------------ CART ------------------ */
 app.post("/addtocart", fetchUser, async (req, res) => {
-  let userData = await Users.findOne({ _id: req.user.id });
-  userData.cartData[req.body.itemId] =
-    (userData.cartData[req.body.itemId] || 0) + 1;
-  await Users.findOneAndUpdate(
-    { _id: req.user.id },
-    { cartData: userData.cartData }
-  );
-  res.send("Added");
-});
-
-app.post("/removefromcart", fetchUser, async (req, res) => {
-  let userData = await Users.findOne({ _id: req.user.id });
-  if (userData.cartData[req.body.itemId] > 0) {
-    userData.cartData[req.body.itemId] -= 1;
-  }
-  await Users.findOneAndUpdate(
-    { _id: req.user.id },
-    { cartData: userData.cartData }
-  );
-  res.send("Removed");
+  const user = await Users.findById(req.user.id);
+  user.cartData[req.body.itemId]++;
+  await user.save();
+  res.json({ success: true });
 });
 
 app.post("/getcart", fetchUser, async (req, res) => {
-  try {
-    let userData = await Users.findOne({ _id: req.user.id });
-
-    if (!userData) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.json(userData.cartData);
-  } catch (err) {
-    console.error("❌ Error fetching cart data:", err.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
+  const user = await Users.findById(req.user.id);
+  res.json(user.cartData);
 });
 
-// ----------------------
-// PAYMENT ENDPOINT
-// ----------------------
+/* ------------------ PAYMENT SETUP ------------------ */
+let razorpay = null;
+if (process.env.USE_FAKE_PAYMENT !== "true" && process.env.RAZORPAY_KEY_ID) {
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+  console.log("✅ Razorpay Enabled");
+} else console.log("⚠️ Fake Payment Mode ON");
+
 app.post("/payment/process", async (req, res) => {
-  try {
-    const options = {
-      amount: req.body.amount * 100, // amount in paise
-      currency: "INR",
-      receipt: `order_rcptid_${Date.now()}`,
-    };
+  if (process.env.USE_FAKE_PAYMENT === "true")
+    return res.json({
+      success: true,
+      fake: true,
+      order: { id: "order_fake_" + Date.now(), amount: req.body.amount * 100 },
+    });
 
-    const order = await instance.orders.create(options);
-    res.status(200).json({ success: true, order });
-  } catch (err) {
-    console.error("❌ Razorpay Error:", err);
-    res.status(500).json({ success: false, error: "Payment initiation failed" });
-  }
+  const order = await razorpay.orders.create({
+    amount: req.body.amount * 100,
+    currency: "INR",
+  });
+  res.json({ success: true, order });
 });
 
-
-
-//RAZORPAY_KEY API
-
-app.use("/", paymentRoutes);
-
-
-
-
-// VERIFY PAYMENT
 app.post("/payment/verify", async (req, res) => {
-  try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+  if (process.env.USE_FAKE_PAYMENT === "true")
+    return res.json({ success: true, fake: true });
 
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
-
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_API_SECRET)
-      .update(body.toString())
-      .digest("hex");
-
-    if (expectedSignature === razorpay_signature) {
-      return res.status(200).json({ success: true, message: "Payment verified successfully" });
-    } else {
-      return res.status(400).json({ success: false, message: "Invalid signature" });
-    }
-  } catch (err) {
-    console.error("❌ Payment verification error:", err);
-    res.status(500).json({ success: false, error: "Verification failed" });
-  }
+  const body = req.body.razorpay_order_id + "|" + req.body.razorpay_payment_id;
+  const expected = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(body)
+    .digest("hex");
+  res.json({ success: expected === req.body.razorpay_signature });
 });
 
-
-
-// ----------------------
-// OTHER ROUTES
-// ----------------------
+/* ------------------ OTHER ROUTES ------------------ */
+app.use("/payment", paymentRoutes);
 app.use("/", productRoutes);
 
-// Test route
-app.get("/", (req, res) => res.send("Express App is running 🚀"));
+app.get("/", (req, res) => res.send("🚀 Backend Running"));
 
-// ----------------------
-// START SERVER
-// ----------------------
-app.listen(port, () => console.log(`✅ Server running on port ${port}`));
+/* ------------------ START SERVER ------------------ */
+app.listen(PORT, () =>
+  console.log(`✅ Server running on http://localhost:${PORT}`),
+);

@@ -15,7 +15,10 @@ const Chatform = ({ chatHistory, setChatHistory, generateBotResponse }) => {
 
     // Call generateBotResponse with updated history
     setTimeout(() => {
-      generateBotResponse([...chatHistory, { role: "user", text: userMessage }]);
+      generateBotResponse([
+        ...chatHistory,
+        { role: "user", text: userMessage },
+      ]);
     }, 0);
   };
 
@@ -28,7 +31,11 @@ const Chatform = ({ chatHistory, setChatHistory, generateBotResponse }) => {
         className="message-input"
         required
       />
-      <button type="submit" className="material-symbols-rounded" style={{ fontSize: "20px" }}>
+      <button
+        type="submit"
+        className="material-symbols-rounded"
+        style={{ fontSize: "20px" }}
+      >
         arrow_upward
       </button>
     </form>

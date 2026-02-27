@@ -1,36 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import './Popular.css';
+import React, { useEffect, useState } from "react";
+import "./Popular.css";
 
-import Item from '../Item/Item';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
+import Item from "../Item/Item";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 const Popular = () => {
   const [popularProducts, setPopularProducts] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:4000/popularinplate')
-      .then(res => res.json())
-      .then(data => {
+    fetch("http://localhost:4000/popularinplate")
+      .then((res) => res.json())
+      .then((data) => {
         console.log("Fetched popular products:", data); // debug log
         setPopularProducts(data);
       })
-      .catch(err => console.error("Fetch error:", err));
+      .catch((err) => console.error("Fetch error:", err));
   }, []);
 
   useEffect(() => {
-    AOS.init({ duration: 1000, easing: 'ease-in-out' });
+    AOS.init({ duration: 1000, easing: "ease-in-out" });
   }, []);
 
   return (
-    <div className='popular' data-aos="fade-up">
+    <div className="popular" data-aos="fade-up">
       <h1 data-aos="zoom-in">POPULAR IN PLATE</h1>
       <hr data-aos="fade-right" />
 
       <div className="popular-item">
         {popularProducts.length > 0 ? (
           popularProducts.map((item, i) => (
-            <div data-aos="fade-up" data-aos-delay={i * 100} key={item.id}>
+            <div data-aos="fade-up" data-aos-delay={i * 100} key={item._id}>
               <Item
                 id={item.id}
                 name={item.name}

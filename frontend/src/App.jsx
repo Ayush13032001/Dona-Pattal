@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import "./App.css";
@@ -17,11 +17,12 @@ import AllProduct from "./Pages/AllProduct";
 import banner_mens from "./Components/Assets/banner_mens.png";
 import banner_kids from "./Components/Assets/banner_kids.png";
 import banner_women from "./Components/Assets/banner_women.png";
+import OtpPage from "./Pages/OtpPage.jsx";
 
 // Chatbot imports
-import ChatbotIcon from "./components/ChatbotIcon";
-import Chatform from "./components/Chatform";
-import ChatMessage from "./components/ChatMessage";
+import ChatbotIcon from "./Components/ChatbotIcon";
+import Chatform from "./Components/Chatform.jsx";
+import ChatMessage from "./Components/ChatMessage.jsx";
 import { companyInfo } from "./companyInfo.js";
 
 // Loader component (for chatbot)
@@ -33,62 +34,97 @@ export const DotLoader = () => (
   </span>
 );
 
+// ✅ Wrapper to handle Navbar/Footer conditionally
+const AppWrapper = () => {
+  const location = useLocation();
+
+  // Hide Navbar/Footer for login and OTP
+  const hideNavFooter = ["/login", "/verify-otp"].includes(location.pathname);
+
+  return (
+    <>
+      {!hideNavFooter && <Navbar />}
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/plate"
+          element={<ShopCategory banner={banner_mens} category="plate" />}
+        />
+        <Route
+          path="/paper"
+          element={<ShopCategory banner={banner_women} category="paper" />}
+        />
+        <Route
+          path="/glass"
+          element={<ShopCategory banner={banner_kids} category="glass" />}
+        />
+        <Route path="/contactus" element={<ContactUs />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/allproduct" element={<AllProduct />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/login" element={<LoginSignup />} />
+        <Route path="/products/:productId" element={<Products />} />
+        <Route path="/verify-otp" element={<OtpPage />} />
+        <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+      </Routes>
+
+      {!hideNavFooter && <Footer />}
+    </>
+  );
+};
+
 function App() {
   // ✅ Ecommerce animation init
   useEffect(() => {
-    AOS.init({
-      duration: 1000,
-      once: true,
-    });
+    AOS.init({ duration: 1000, once: true });
   }, []);
 
-  // ✅ Chatbot states
+  // Chatbot states
   const [chatHistory, setChatHistory] = useState([
     { hideInChat: true, role: "model", text: companyInfo },
   ]);
   const chatBodyRef = useRef();
   const [showChatbot, setShowChatBot] = useState(false);
 
-  // ✅ Chatbot response generator
   const generateBotResponse = async (history) => {
-    setChatHistory((prev) => [
-      ...prev,
-      { role: "model", isLoader: true, hideInChat: false },
-    ]);
+    const updateHistory = (text) => {
+      setChatHistory((prev) => [
+        ...prev.filter((msg) => msg.text !== "Thinking..."),
+        { role: "model", text },
+      ]);
+    };
 
-    const formattedHistory = history.map(({ role, text }) => ({
-      role,
-      parts: [{ text }],
-    }));
+    history = history.map(({ role, text }) => ({ role, parts: [{ text }] }));
 
     try {
       const response = await fetch(import.meta.env.VITE_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: formattedHistory }),
+        body: JSON.stringify({ contents: history }),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error?.message || "Something went wrong!");
+      if (!response.ok)
+        throw new Error(data.error?.message || "Something went wrong!");
 
       const apiText = data.candidates[0].content.parts[0].text
         .replace(/\*\*(.*?)\*\*/g, "$1")
         .trim();
-
-      setChatHistory((prev) =>
-        prev.map((msg) => (msg.isLoader ? { role: "model", text: apiText } : msg))
-      );
+      updateHistory(apiText);
     } catch (err) {
       console.error(err.message);
       setChatHistory((prev) =>
         prev.map((msg) =>
-          msg.isLoader ? { role: "model", text: "Oops! Something went wrong." } : msg
-        )
+          msg.isLoader
+            ? { role: "model", text: "Oops! Something went wrong." }
+            : msg,
+        ),
       );
     }
   };
 
-  // ✅ Auto-scroll chatbot
+  // Auto-scroll chatbot
   useEffect(() => {
     if (chatBodyRef.current) {
       chatBodyRef.current.scrollTo({
@@ -100,23 +136,8 @@ function App() {
 
   return (
     <>
-      {/* Ecommerce App */}
       <BrowserRouter>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/plate" element={<ShopCategory banner={banner_mens} category="plate" />} />
-          <Route path="/paper" element={<ShopCategory banner={banner_women} category="paper" />} />
-          <Route path="/glass" element={<ShopCategory banner={banner_kids} category="glass" />} />
-          <Route path="/contactus" element={<ContactUs />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/allproduct" element={<AllProduct />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/login" element={<LoginSignup />} />
-          <Route path="/products/:productId" element={<Products />} />
-          <Route path="*" element={<h1>404 - Page Not Found</h1>} />
-        </Routes>
-        <Footer />
+        <AppWrapper />
       </BrowserRouter>
 
       {/* Chatbot Floating Widget */}
@@ -149,7 +170,6 @@ function App() {
           </div>
 
           <div ref={chatBodyRef} className="chat-body">
-            {/* Greeting */}
             <div className="message bot-message">
               <ChatbotIcon />
               <p className="message-text">
@@ -158,7 +178,6 @@ function App() {
               </p>
             </div>
 
-            {/* Chat history */}
             {chatHistory.map((chat, i) => (
               <ChatMessage key={i} chat={chat} />
             ))}

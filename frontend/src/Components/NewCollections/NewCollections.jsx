@@ -1,21 +1,22 @@
-import React, { useEffect, useState } from 'react'
-import './NewCollections.css'
-import Item from '../Item/Item'
+import React, { useEffect, useState } from "react";
+import "./NewCollections.css";
+import Item from "../Item/Item";
 
 const NewCollections = () => {
-  const [new_collection , setNew_Collection] = useState([]);
-  useEffect(()=> {
-    fetch('http://localhost:4000/newcollection')
-    .then((response) =>response.json())
-    .then((data) => setNew_Collection(data))
-  },[])
+  const [new_collection, setNew_Collection] = useState([]);
+  useEffect(() => {
+    fetch("http://localhost:4000/recentproducts")
+      .then((response) => response.json())
+      .then((data) => setNew_Collection(data));
+  }, []);
   return (
-    <div className='new-collections' data-aos="fade-up">
+    <div className="new-collections" data-aos="fade-up">
       <h1 data-aos="zoom-in">New Collections</h1>
       <hr data-aos="fade-right" />
 
       <div className="new-collections-item">
-        {new_collection.slice(0, 8).map((item, i) => {   // ✅ only 4 items
+        {new_collection.slice(0, 8).map((item, i) => {
+          // ✅ only 4 items
           return (
             <div
               key={i}
@@ -30,11 +31,11 @@ const NewCollections = () => {
                 old_price={item.old_price}
               />
             </div>
-          )
+          );
         })}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default NewCollections
+export default NewCollections;

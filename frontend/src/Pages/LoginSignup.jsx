@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
-import './CSS/LoginSignup.css';
-
-// ✅ React-Toastify
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import React, { useEffect, useState } from "react";
+import AOS from "aos";
+import "aos/dist/aos.css";
+import "./CSS/LoginSignup.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
 
 const LoginSignup = () => {
   const [state, setState] = useState("Login");
   const [formData, setFormData] = useState({
     username: "",
     password: "",
-    email: ""
+    email: "",
   });
+
+  const navigate = useNavigate();
 
   const changeHandler = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,13 +30,14 @@ const LoginSignup = () => {
         },
         body: JSON.stringify(formData),
       });
-
       const data = await response.json();
 
       if (data.success) {
-        localStorage.setItem("auth-token", data.token);
-        toast.success("✅ Login successful");
-        setTimeout(() => window.location.replace("/"), 1500);
+        toast.success("✅ Login successful. Please verify OTP.");
+        // Redirect to OTP page with email
+        setTimeout(() => {
+          navigate("/verify-otp", { state: { email: formData.email } });
+        }, 1000);
       } else {
         toast.error(data.error || "❌ Login failed");
       }
@@ -55,13 +57,13 @@ const LoginSignup = () => {
         },
         body: JSON.stringify(formData),
       });
-
       const data = await response.json();
 
       if (data.success) {
-        localStorage.setItem("auth-token", data.token);
-        toast.success("🎉 Signup successful");
-        setTimeout(() => window.location.replace("/"), 1500);
+        toast.success("🎉 Signup successful. Please verify OTP.");
+        setTimeout(() => {
+          navigate("/verify-otp", { state: { email: formData.email } });
+        }, 1000);
       } else {
         toast.error(data.error || "❌ Signup failed");
       }
@@ -129,7 +131,6 @@ const LoginSignup = () => {
         </div>
       </div>
 
-      {/* ✅ Toastify container */}
       <ToastContainer
         position="top-right"
         autoClose={2000}

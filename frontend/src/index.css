@@ -5,12 +5,12 @@
 }
 
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   overflow-x: hidden; /* remove unwanted horizontal scroll */
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,1,0');
+@import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,1,0");
 
 /* Global Reset */
 * {
@@ -41,8 +41,10 @@ body {
 #chatbot-toggler span {
   color: #fff;
   font-size: 28px;
-  font-variation-settings: 'FILL' 1;
-  transition: opacity 0.2s ease, transform 0.3s ease;
+  font-variation-settings: "FILL" 1;
+  transition:
+    opacity 0.2s ease,
+    transform 0.3s ease;
   position: absolute;
 }
 
@@ -78,8 +80,9 @@ body {
   transform: scale(0);
   background: #fff;
   border-radius: 15px;
-  box-shadow: 0 0 128px rgba(0,0,0,0.1),
-              0 32px 64px -48px rgba(0,0,0,0.5);
+  box-shadow:
+    0 0 128px rgba(0, 0, 0, 0.1),
+    0 32px 64px -48px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   transition: all 0.3s ease;
   z-index: 998;
@@ -176,6 +179,7 @@ body {
   word-wrap: break-word;
   white-space: pre-line;
   font-size: 0.95rem;
+  text-align: left;
 }
 
 .chat-body .bot-message .message-text {
@@ -209,7 +213,7 @@ body {
   background: #fff;
   border-radius: 32px;
   outline: 1px solid #cccce5;
-  box-shadow: 0 0 8px rgba(0,0,0,0.06);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.06);
 }
 
 .chat-footer .chat-form:focus-within {
