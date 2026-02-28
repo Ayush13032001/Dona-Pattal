@@ -1,66 +1,23 @@
+// src/Components/Cart/CartItems.jsx
 import React, { useContext } from "react";
 import "./CartItems.css";
 import { ShopContext } from "../../Context/ShopContext";
 import remove_icon from "../Assets/cart_cross_icon.png";
+import { useNavigate } from "react-router-dom";
 
 const CartItems = () => {
   const { getTotalCartAmount, all_product, cartItems, removeFromCart } =
     useContext(ShopContext);
+  const navigate = useNavigate();
 
-  // 👇 Razorpay Checkout
-  const checkoutHandler = async () => {
-    try {
-      // 1. Get Razorpay key from backend
-      const { key } = await fetch("http://localhost:4000/getkey").then((res) =>
-        res.json()
-      );
-
-      // 2. Create order from backend
-      const { order } = await fetch("http://localhost:4000/payment/process", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: getTotalCartAmount(), // total amount in Rs
-        }),
-      }).then((res) => res.json());
-
-      // 3. Open Razorpay checkout
-      const options = {
-        key,
-        amount: order.amount,
-        currency: "INR",
-        name: "Mahesh Dona Pattal",
-        description: "Order Payment",
-        order_id: order.id,
-        handler: async function (response) {
-          // 4. Verify payment on backend
-          const verifyRes = await fetch("http://localhost:4000/payment/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(response),
-          }).then((res) => res.json());
-
-          if (verifyRes.success) {
-            alert("✅ Payment Successful!");
-          } else {
-            alert("❌ Payment Verification Failed");
-          }
-        },
-        prefill: {
-          name: "Ayush Jaiswal", // optional: you can take from logged-in user
-          email: "ayushjaiswal.madz1303@gmail.com",
-          contact: "9001995951",
-        },
-        theme: {
-          color: "#3399cc",
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      console.error("❌ Checkout Error:", err);
+  const checkoutHandler = () => {
+    const token = localStorage.getItem("auth-token");
+    if (!token) {
+      alert("Please login before checkout!");
+      navigate("/login");
+      return;
     }
+    navigate("/payment");
   };
 
   return (
@@ -75,9 +32,9 @@ const CartItems = () => {
       </div>
       <hr />
 
-      {all_product.map((e) => {
-        if (cartItems[e.id] > 0) {
-          return (
+      {all_product.map(
+        (e) =>
+          cartItems[e.id] > 0 && (
             <div key={e.id}>
               <div className="cartitems-format">
                 <img
@@ -100,10 +57,8 @@ const CartItems = () => {
               </div>
               <hr />
             </div>
-          );
-        }
-        return null;
-      })}
+          ),
+      )}
 
       <div className="cartitems-down">
         <div className="cartitems-tatal">
@@ -125,13 +80,6 @@ const CartItems = () => {
             </div>
           </div>
           <button onClick={checkoutHandler}>PROCEED TO CHECKOUT</button>
-        </div>
-        <div className="cartitems-promocode">
-          <p>If you have a promo code, Enter it here</p>
-          <div className="caritems-promobox">
-            <input type="text" placeholder="promo code" />
-            <button>Submit</button>
-          </div>
         </div>
       </div>
     </div>

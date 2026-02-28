@@ -1,0 +1,125 @@
+/* Page wrapper */
+.payment-page {
+  max-width: 520px;
+  margin: 60px auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* Heading */
+.payment-page h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #222;
+}
+
+/* Form layout */
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Inputs & textarea */
+.payment-form input,
+.payment-form textarea {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #dcdcdc;
+  font-size: 14px;
+  transition: 0.25s ease;
+}
+
+.payment-form textarea {
+  resize: none;
+  min-height: 80px;
+}
+
+.payment-form input:focus,
+.payment-form textarea:focus {
+  outline: none;
+  border-color: #3399cc;
+  box-shadow: 0 0 0 2px rgba(51, 153, 204, 0.15);
+}
+
+/* Payment section */
+.payment-form h3 {
+  margin-top: 10px;
+  font-size: 16px;
+  color: #444;
+}
+
+/* Radio labels */
+.payment-form label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #333;
+}
+
+.payment-form input[type="radio"] {
+  accent-color: #3399cc;
+}
+
+/* Total */
+.payment-form h2 {
+  text-align: right;
+  margin-top: 10px;
+  color: #000;
+}
+
+/* Button */
+.payment-form button {
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #3399cc, #2b7aa0);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.payment-form button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(51, 153, 204, 0.4);
+}
+
+.payment-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ✅ Success page */
+.payment-success {
+  max-width: 420px;
+  margin: 120px auto;
+  padding: 40px 30px;
+  text-align: center;
+  background: #eafff1;
+  border-radius: 14px;
+  border: 1px solid #b7f0cd;
+}
+
+.payment-success h1 {
+  color: #1e9c55;
+  margin-bottom: 12px;
+}
+
+.payment-success p {
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.payment-success b {
+  color: #3399cc;
+  font-weight: 600;
+}

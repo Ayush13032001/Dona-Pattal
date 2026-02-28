@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import AOS from "aos";
@@ -18,12 +19,16 @@ import banner_mens from "./Components/Assets/banner_mens.png";
 import banner_kids from "./Components/Assets/banner_kids.png";
 import banner_women from "./Components/Assets/banner_women.png";
 import OtpPage from "./Pages/OtpPage.jsx";
+import Payment from "./Pages/Payment.jsx";
 
 // Chatbot imports
 import ChatbotIcon from "./Components/ChatbotIcon";
 import Chatform from "./Components/Chatform.jsx";
 import ChatMessage from "./Components/ChatMessage.jsx";
 import { companyInfo } from "./companyInfo.js";
+
+// ProtectedRoute
+import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 
 // Loader component (for chatbot)
 export const DotLoader = () => (
@@ -66,6 +71,17 @@ const AppWrapper = () => {
         <Route path="/login" element={<LoginSignup />} />
         <Route path="/products/:productId" element={<Products />} />
         <Route path="/verify-otp" element={<OtpPage />} />
+
+        {/* Protected Payment Route */}
+        <Route
+          path="/payment"
+          element={
+            <ProtectedRoute>
+              <Payment />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="*" element={<h1>404 - Page Not Found</h1>} />
       </Routes>
 

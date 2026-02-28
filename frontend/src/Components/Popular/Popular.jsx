@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "./Popular.css";
 
 import Item from "../Item/Item";
@@ -7,19 +7,33 @@ import "aos/dist/aos.css";
 
 const Popular = () => {
   const [popularProducts, setPopularProducts] = useState([]);
-
-  useEffect(() => {
-    fetch("http://localhost:4000/popularinplate")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Fetched popular products:", data); // debug log
-        setPopularProducts(data);
-      })
-      .catch((err) => console.error("Fetch error:", err));
-  }, []);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const fetchRef = useRef(false); // prevent double fetch in Strict Mode
 
   useEffect(() => {
     AOS.init({ duration: 1000, easing: "ease-in-out" });
+  }, []);
+
+  useEffect(() => {
+    if (fetchRef.current) return; // already fetched
+    fetchRef.current = true;
+
+    const fetchPopularProducts = async () => {
+      try {
+        const res = await fetch("http://localhost:4000/popularinplate");
+        if (!res.ok) throw new Error("Failed to fetch popular products");
+        const data = await res.json();
+        setPopularProducts(data);
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPopularProducts();
   }, []);
 
   return (
@@ -28,9 +42,17 @@ const Popular = () => {
       <hr data-aos="fade-right" />
 
       <div className="popular-item">
-        {popularProducts.length > 0 ? (
+        {loading ? (
+          <p>Loading products...</p>
+        ) : error ? (
+          <p style={{ color: "red" }}>{error}</p>
+        ) : popularProducts.length > 0 ? (
           popularProducts.map((item, i) => (
-            <div data-aos="fade-up" data-aos-delay={i * 100} key={item._id}>
+            <div
+              data-aos="fade-up"
+              data-aos-delay={i * 100}
+              key={item._id || item.id}
+            >
               <Item
                 id={item.id}
                 name={item.name}
@@ -41,7 +63,7 @@ const Popular = () => {
             </div>
           ))
         ) : (
-          <p>Loading products...</p>
+          <p>No popular products found</p>
         )}
       </div>
     </div>
